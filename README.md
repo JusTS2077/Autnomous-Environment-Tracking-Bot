@@ -4,6 +4,7 @@
 > **Track**: Propositional Logic Knowledge-Based Agent (Resolution & Model Entailment)
 
 ---
+https://docs.google.com/videos/d/1VjZRDHU012GUij48vpXsCdplp2oowx6sh5-rq3Bkl0U/play?usp=sharing
 
 ## 🚀 Scenario & Overview
 
