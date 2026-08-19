@@ -1,10 +1,11 @@
 """
-main.py - Full-Screen Mars Rover Telemetry Dashboard & Martian Color Palette
+main.py - Full-Screen Mars Rover Telemetry Dashboard & Asset Image Renderer
 ---------------------------------------------------------------------------------
 AI Express Hackathon: Hybrid Autonomous Mars Rover Agent (Units 1 - 4 AI)
 Features:
+- Robust Custom PNG Asset Mapping for assets/ (radiation.png, start.png, hazard.png, storm.png, rover.png)
+- Keeps authentic Martian themed color background for safe, visited, and fog-of-war cells
 - Authentic Martian Iron-Oxide & Terracotta Color Palette (Basalt, Rust, Ochre, Sand)
-- Automatic PNG Asset Loading from assets/ folder (rover.png, hazard.png, radiation.png, etc.)
 - Full-Screen Desktop Dashboard with live telemetry (Speedometer m/s, Battery Indicator %, Heading)
 - Perfectly centered cell positioning for Rover chassis and station lander icons
 - Silky-Smooth 60 FPS Sub-Frame Pixel Interpolation for driving animation
@@ -179,19 +180,28 @@ class RoverVisualizer:
         self._load_custom_assets()
 
     def _load_custom_assets(self):
-        """Loads custom PNG images from assets/ directory if available."""
-        asset_names = ["rover", "hazard", "radiation", "storm", "start", "goal", "safe"]
-        for name in asset_names:
-            filename = f"{name}.png"
-            path = os.path.join(ASSETS_DIR, filename)
-            if os.path.exists(path):
-                try:
-                    img = pygame.image.load(path).convert_alpha()
-                    scaled_img = pygame.transform.smoothscale(img, (self.cell_size, self.cell_size))
-                    self.assets[name] = scaled_img
-                    print(f" -> [ASSET LOADED] Loaded custom asset: assets/{filename}")
-                except Exception as e:
-                    print(f" -> [ASSET WARNING] Could not load assets/{filename}: {e}")
+        """Loads custom PNG images from assets/ directory with flexible filename mapping."""
+        asset_map = {
+            "rover": ["rover.png", "rover.jpg", "rover.jpeg"],
+            "hazard": ["hazard.png", "crater.png", "hazard.jpg"],
+            "radiation": ["radiation.png", "rad.png", "radiation.jpg", "radiation.jpeg"],
+            "storm": ["storm.png", "dust_storm.png", "storm.jpg"],
+            "start": ["start.png", "start_station.png", "base.png"],
+            "goal": ["goal.png", "target.png", "habitat.png"]
+        }
+
+        for name, possible_files in asset_map.items():
+            for filename in possible_files:
+                path = os.path.join(ASSETS_DIR, filename)
+                if os.path.exists(path):
+                    try:
+                        img = pygame.image.load(path).convert_alpha()
+                        scaled_img = pygame.transform.smoothscale(img, (self.cell_size, self.cell_size))
+                        self.assets[name] = scaled_img
+                        print(f" -> [ASSET LOADED] Successfully loaded assets/{filename} for '{name}'")
+                        break
+                    except Exception as e:
+                        print(f" -> [ASSET WARNING] Could not load assets/{filename}: {e}")
 
     def update_telemetry(self, is_moving, new_heading=None):
         """Simulates live speed gauge fluctuations, battery drain indicator, and heading angle."""
@@ -220,6 +230,9 @@ class RoverVisualizer:
                 pos = (x, y)
                 cell_rect = pygame.Rect(self.grid_x + x * self.cell_size, self.grid_y + y * self.cell_size, self.cell_size, self.cell_size)
 
+                is_gt_radiation = (grid_env.ground_truth[y][x] == RADIATION)
+                is_gt_hazard = (grid_env.ground_truth[y][x] == HAZARD)
+
                 if pos in grid_env.storm_cells:
                     color = COLOR_STORM
                     asset_key = "storm"
@@ -229,18 +242,18 @@ class RoverVisualizer:
                 elif pos == grid_env.goal:
                     color = COLOR_SAFE
                     asset_key = "goal"
-                elif pos in kb.known_hazards:
+                elif pos in kb.known_hazards or is_gt_hazard:
                     color = COLOR_HAZARD
                     asset_key = "hazard"
-                elif pos in kb.known_radiation:
+                elif pos in kb.known_radiation or is_gt_radiation:
                     color = COLOR_RADIATION
                     asset_key = "radiation"
                 elif pos in kb.visited:
                     color = COLOR_VISITED
-                    asset_key = "safe"
+                    asset_key = None
                 elif pos in kb.known_safe:
                     color = COLOR_SAFE
-                    asset_key = "safe"
+                    asset_key = None
                 else:
                     color = COLOR_UNKNOWN
                     asset_key = None
@@ -248,16 +261,16 @@ class RoverVisualizer:
                 pygame.draw.rect(self.screen, color, cell_rect)
                 pygame.draw.rect(self.screen, COLOR_GRID_LINE, cell_rect, 1)
 
-                if asset_key and asset_key in self.assets and asset_key not in ("start", "goal"):
+                if asset_key and asset_key in self.assets:
                     self.screen.blit(self.assets[asset_key], cell_rect.topleft)
                 else:
                     if pos in grid_env.storm_cells:
                         lbl = self.font_hud.render("⚡", True, (255, 255, 255))
                         self.screen.blit(lbl, (cell_rect.x + self.cell_size // 2 - 6, cell_rect.y + self.cell_size // 2 - 8))
-                    elif pos in kb.known_hazards:
+                    elif pos in kb.known_hazards or is_gt_hazard:
                         lbl = self.font_hud.render("H", True, (255, 255, 255))
                         self.screen.blit(lbl, (cell_rect.x + self.cell_size // 2 - 5, cell_rect.y + self.cell_size // 2 - 8))
-                    elif pos in kb.known_radiation:
+                    elif pos in kb.known_radiation or is_gt_radiation:
                         lbl = self.font_hud.render("R", True, (255, 255, 255))
                         self.screen.blit(lbl, (cell_rect.x + self.cell_size // 2 - 5, cell_rect.y + self.cell_size // 2 - 8))
 
