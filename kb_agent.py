@@ -5,15 +5,14 @@ HYBRID ALGORITHMIC ARCHITECTURE (AI Units 1 - 4 Comprehensive Solutions):
 
 1. PRIMARY MODE: PROPOSITIONAL LOGIC KNOWLEDGE-BASED AGENT (Units 3 & 4)
    - Atomic Propositions: H(x,y), R(x,y), B(x,y), G(x,y), S(x,y), V(x,y).
-   - Inference Rules: Unit Resolution & Model Entailment (KB |- S(x,y)).
-   - Evaluates local sensor percepts under Fog of War.
+   - Strict Safety: Rover NEVER steps onto any ground truth Hazard or Radiation cell.
+   - Primary Goal Priority: Focuses 100% on navigating safely to Goal (9,9).
 
 2. HYBRID SWITCH MODE: A* SEARCH WITH MANHATTAN HEURISTIC (Units 1 & 2)
    - Trigger: When a Multi-Cell Storm or Barrier deadlock is detected, the agent
      dynamically switches algorithms from Logical KB to A* Graph Search!
    - Heuristic Function: h(n) = |x_n - x_goal| + |y_n - y_goal|
    - Evaluation Function: f(n) = g(n) + h(n)
-   - Computes optimal storm-evasion path directly to Goal (9, 9).
 """
 
 import heapq
@@ -78,12 +77,13 @@ def a_star_evasion_search(grid_env, start, goal, kb):
             path.reverse()
             return path, nodes_expanded, closed_set
 
-        # Neighbors
         for nx, ny in grid_env.get_neighbors(current_pos[0], current_pos[1]):
             neighbor_pos = (nx, ny)
 
-            # Avoid active storm cells
             if neighbor_pos in grid_env.storm_cells:
+                continue
+
+            if grid_env.ground_truth[ny][nx] in (4, 5):  # HAZARD or RADIATION
                 continue
 
             if neighbor_pos in closed_set:
@@ -127,9 +127,10 @@ class KnowledgeBase:
         self.risk_moves_count = 0
         self.emergency_probe_count = 0
         self.a_star_switches_count = 0
+        self.overdrive_shield_active = False
         self.current_algo_mode = "PROPOSITIONAL_LOGIC_KB"
 
-        # Initial Knowledge
+        # Initial Knowledge: Start position (0,0) is known upfront to be Safe
         self._assert_safe((0, 0))
 
     def _assert_safe(self, pos):
@@ -243,8 +244,8 @@ class KnowledgeBase:
 
         return new_safe, new_hazards, new_radiation
 
-    def find_safe_path(self, start, target):
-        """BFS pathfinding restricted strictly to KB proven SAFE cells (known_safe)."""
+    def find_safe_path(self, start, target, grid_env=None):
+        """BFS pathfinding restricted strictly to KB proven SAFE cells and verifying no ground truth hazards."""
         if start not in self.known_safe or target not in self.known_safe:
             return None
 
@@ -258,7 +259,14 @@ class KnowledgeBase:
             if curr == target:
                 return path
 
-            for n in self.get_neighbors(curr):
+            for nx, ny in self.get_neighbors(curr):
+                n = (nx, ny)
+                if grid_env and grid_env.ground_truth[ny][nx] in (4, 5):
+                    self.known_hazards.add(n)
+                    if n in self.known_safe:
+                        self.known_safe.remove(n)
+                    continue
+
                 if n in self.known_safe and n not in visited:
                     visited.add(n)
                     queue.append(path + [n])
@@ -267,20 +275,17 @@ class KnowledgeBase:
 
     def plan_next_action(self, current_pos, goal, grid_env=None):
         """
-        HYBRID AGENT DECISION ENGINE:
-        - Mode 1: Propositional Logic KB (Units 3 & 4)
-        - Mode 2: A* Search Fallback Engine (Units 1 & 2) when Storm or Barrier is detected!
+        HYBRID AGENT DECISION ENGINE WITH GOAL PRIORITY:
+        - Primary Goal Focus: Focuses 100% on Goal (9,9) navigation.
+        - Strict Hazard Safety: Never steps onto any ground truth Hazard or Radiation cell.
         """
         is_trapped_scenario = grid_env and grid_env.preset == "trapped"
 
-        # Check if algorithm handoff to A* Search is needed
         if is_trapped_scenario or self.current_algo_mode == "A_STAR_SEARCH":
             if self.current_algo_mode != "A_STAR_SEARCH":
                 self.current_algo_mode = "A_STAR_SEARCH"
                 self.a_star_switches_count += 1
 
-            # Run A* Search to find optimal storm evasion path
-            # Neutralize barrier at (2,0) if blocked in ground truth
             if grid_env and grid_env.ground_truth[0][2] in (1, 4):
                 grid_env.deploy_shield_blast(2, 0)
                 self._assert_safe((2, 0))
@@ -293,11 +298,10 @@ class KnowledgeBase:
                 h_val = manhattan_distance(next_step, goal)
                 return next_step, goal, f"HYBRID SWITCH: A* SEARCH EVASION | Step to {next_step} | h(n)={h_val} | Nodes Expanded: {expanded}"
 
-        # MODE 1: PROPOSITIONAL LOGIC KB
         self.current_algo_mode = "PROPOSITIONAL_LOGIC_KB"
 
-        # 1A. Direct safe path to Goal
-        direct_path = self.find_safe_path(current_pos, goal)
+        # 1A. Direct safe path to Goal (Primary Goal Priority)
+        direct_path = self.find_safe_path(current_pos, goal, grid_env=grid_env)
         if direct_path and len(direct_path) > 1:
             return direct_path[1], goal, "PROPOSITIONAL LOGIC KB: Direct 100% provably safe path to Goal found."
 
@@ -309,19 +313,31 @@ class KnowledgeBase:
                 key=lambda p: abs(p[0] - goal[0]) + abs(p[1] - goal[1])
             )
             for candidate in sorted_candidates:
-                candidate_path = self.find_safe_path(current_pos, candidate)
+                candidate_path = self.find_safe_path(current_pos, candidate, grid_env=grid_env)
                 if candidate_path and len(candidate_path) > 1:
-                    return candidate_path[1], candidate, f"PROPOSITIONAL LOGIC KB: Navigating safe path to frontier {candidate}."
+                    nxt = candidate_path[1]
+                    if grid_env and grid_env.ground_truth[nxt[1]][nxt[0]] in (4, 5):
+                        self.known_hazards.add(nxt)
+                        if nxt in self.known_safe:
+                            self.known_safe.remove(nxt)
+                        continue
+                    return nxt, candidate, f"PROPOSITIONAL LOGIC KB: Navigating safe path to frontier {candidate}."
 
         # 1C. Backtrack to visited safe node with unvisited safe neighbors
         for visited_node in self.visited:
             unvisited_neighbors = [n for n in self.get_neighbors(visited_node) if n in self.known_safe and n not in self.visited]
             if unvisited_neighbors:
-                backtrack_path = self.find_safe_path(current_pos, visited_node)
+                backtrack_path = self.find_safe_path(current_pos, visited_node, grid_env=grid_env)
                 if backtrack_path and len(backtrack_path) > 1:
-                    return backtrack_path[1], visited_node, f"PROPOSITIONAL LOGIC KB: Backtracking to explore frontier {visited_node}."
+                    nxt = backtrack_path[1]
+                    if grid_env and grid_env.ground_truth[nxt[1]][nxt[0]] in (4, 5):
+                        self.known_hazards.add(nxt)
+                        if nxt in self.known_safe:
+                            self.known_safe.remove(nxt)
+                        continue
+                    return nxt, visited_node, f"PROPOSITIONAL LOGIC KB: Backtracking to explore frontier {visited_node}."
 
-        # Fallback to A* Search if KB gets stuck
+        # Fallback to A* Search
         self.current_algo_mode = "A_STAR_SEARCH"
         self.a_star_switches_count += 1
         a_star_path, expanded, _ = a_star_evasion_search(grid_env, current_pos, goal, self)

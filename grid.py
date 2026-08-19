@@ -1,9 +1,9 @@
 """
-grid.py - Mars Rover Environment & Sensor Percept Model with Multi-Cell Storm Hazards
+grid.py - Mars Rover Environment & Sensor Percept Model
 ---------------------------------------------------------------------------------
 State Space & Environment Definition:
 - Supports scenario presets ("solvable", "trapped", "clear").
-- Features Multi-Cell Storm Hazards (2x2 / 3x3 contiguous hazard clusters).
+- Ground Truth Grid: Start, Goal, Static Hazard Craters, Radiation Zones, Multi-Cell Storms.
 """
 
 # Cell Constants
@@ -13,7 +13,7 @@ START = 2
 GOAL = 3
 HAZARD = 4
 RADIATION = 5
-STORM = 6  # Multi-Cell Dust Storm Hazard
+STORM = 6
 
 
 class GridEnvironment:
@@ -34,7 +34,7 @@ class GridEnvironment:
         self._setup_environment()
 
     def _setup_environment(self):
-        """Sets up multi-cell storm clusters, static hazards, radiation, start, and goal."""
+        """Sets up start, goal, static hazards, radiation, and storm clusters."""
         sx, sy = self.start
         gx, gy = self.goal
         
@@ -44,28 +44,28 @@ class GridEnvironment:
         self.perceived_grid[gy][gx] = GOAL
 
         if self.preset == "trapped":
-            # Trapped Preset: Large 3x2 Multi-Cell Storm Barrier blocking column 2
             storm_clusters = [
-                (2, 0), (2, 1), (2, 2),  # 3-cell storm cluster
-                (3, 0), (3, 1), (3, 2),  # Adjacent 3-cell storm cluster (3x2 block)
-                (6, 5), (6, 6), (7, 5), (7, 6) # 2x2 storm cluster
+                (2, 0), (2, 1), (2, 2),
+                (3, 0), (3, 1), (3, 2),
+                (6, 5), (6, 6), (7, 5), (7, 6)
             ]
             hazards = [(4, 4), (4, 5)]
             radiation_zones = [(1, 3), (1, 4)]
 
         elif self.preset == "clear":
-            storm_clusters = [(4, 4), (4, 5), (5, 4), (5, 5)]  # Single 2x2 storm cluster
+            storm_clusters = [(4, 4), (4, 5), (5, 4), (5, 5)]
             hazards = []
             radiation_zones = []
 
         else:
-            # Solvable Preset: Multi-cell storm cluster (2x2) with safe path around
-            storm_clusters = [
-                (3, 1), (3, 2), (4, 1), (4, 2), # 2x2 Multi-Cell Storm Hazard
-                (7, 6), (7, 7), (8, 6), (8, 7)  # 2x2 Multi-Cell Storm Hazard
+            # Normal Run Preset: Small scattered 1-cell hazards & radiation
+            storm_clusters = []
+            hazards = [
+                (3, 0), (5, 1), (6, 3), (2, 6), (8, 7), (4, 8)
             ]
-            hazards = [(6, 3), (2, 6)]
-            radiation_zones = [(5, 1), (1, 5)]
+            radiation_zones = [
+                (4, 2), (1, 5), (7, 6), (5, 7)
+            ]
 
         # Place Storm Clusters
         for cx, cy in storm_clusters:
