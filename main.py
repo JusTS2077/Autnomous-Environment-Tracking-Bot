@@ -1,8 +1,9 @@
 """
-main.py - Full-Screen Mars Rover Telemetry Dashboard & Asset Image Renderer
+main.py - Full-Screen Mars Rover Telemetry Dashboard & Martian Color Palette
 ---------------------------------------------------------------------------------
 AI Express Hackathon: Hybrid Autonomous Mars Rover Agent (Units 1 - 4 AI)
 Features:
+- Authentic Martian Iron-Oxide & Terracotta Color Palette (Basalt, Rust, Ochre, Sand)
 - Automatic PNG Asset Loading from assets/ folder (rover.png, hazard.png, radiation.png, etc.)
 - Full-Screen Desktop Dashboard with live telemetry (Speedometer m/s, Battery Indicator %, Heading)
 - Perfectly centered cell positioning for Rover chassis and station lander icons
@@ -21,33 +22,33 @@ from grid import GridEnvironment, UNKNOWN, SAFE, START, GOAL, HAZARD, RADIATION,
 from kb_agent import KnowledgeBase
 
 
-# --- COLOR PALETTE (RGB) ---
-COLOR_BG = (10, 15, 29)            # Deep Space Background
-COLOR_GRID_LINE = (30, 41, 59)     # Grid Line Borders
-COLOR_UNKNOWN = (30, 41, 59)       # Fog-of-War (Dark Slate)
-COLOR_SAFE = (209, 250, 229)       # Proven Safe Cell (Mint Light)
-COLOR_VISITED = (167, 243, 208)    # Visited Path Cell (Soft Emerald)
-COLOR_HAZARD = (239, 68, 68)       # Proved Hazard Crater (Red)
-COLOR_RADIATION = (168, 85, 247)   # Proved Radiation Anomaly (Purple)
-COLOR_STORM = (220, 38, 38)        # Spreading Dust Storm Threat (Fiery Red)
-COLOR_START = (16, 185, 129)       # Start Station S (Green)
-COLOR_GOAL = (245, 158, 11)        # Target Goal G (Amber Gold)
-COLOR_ROVER = (59, 130, 246)       # Mars Rover Agent Chassis (Royal Blue)
-COLOR_SHIELD = (56, 189, 248)      # Overdrive Shield Aura (Sky Blue / Cyan)
-COLOR_PATH = (251, 191, 36)        # Planned Path Highlights (Yellow)
-COLOR_PATH_LINE = (217, 119, 6)    # Path Line (Deep Gold)
-COLOR_PANEL_BG = (15, 23, 42)      # Dashboard Panel BG
-COLOR_PANEL_BORDER = (51, 65, 85)  # Panel Border
-COLOR_TEXT_MAIN = (248, 250, 252)  # Primary Text (Slate Light)
-COLOR_TEXT_MUTED = (148, 163, 184)# Secondary Text
-COLOR_ALERT = (239, 68, 68)        # Alert Text
-COLOR_GAUGE_BAR = (16, 185, 129)   # Speedometer Gauge Bar
+# --- MARTIAN THEMED COLOR PALETTE (RGB) ---
+COLOR_BG = (24, 15, 15)            # Deep Martian Basalt / Night Sky
+COLOR_GRID_LINE = (65, 38, 32)     # Dark Red Dust Grid Borders
+COLOR_UNKNOWN = (55, 35, 30)       # Fog-of-War Martian Dust Shadows
+COLOR_SAFE = (230, 140, 90)        # Discovered Martian Ochre Soil
+COLOR_VISITED = (200, 110, 65)     # Rover Tracked Rust Terrain
+COLOR_HAZARD = (180, 30, 30)       # Deep Volcanic Crater (Crimson Red)
+COLOR_RADIATION = (219, 39, 119)   # Ionizing Radiation Anomaly (Neon Magenta)
+COLOR_STORM = (245, 80, 20)        # Swirling Martian Dust Storm (Fiery Orange-Red)
+COLOR_START = (34, 197, 94)        # Start Lander Station S (Oasis Green)
+COLOR_GOAL = (250, 204, 21)        # Target Goal Habitat G (Solar Gold)
+COLOR_ROVER = (234, 179, 8)        # Mars Rover Titanium Chassis (Gold)
+COLOR_SHIELD = (56, 189, 248)      # Overdrive Energy Shield Aura (Cyan Pulse)
+COLOR_PATH = (254, 215, 170)       # Planned Path Node Highlights (Light Peach)
+COLOR_PATH_LINE = (249, 115, 22)   # Navigation Vector Line (Bright Copper)
+COLOR_PANEL_BG = (38, 24, 22)      # Dashboard Panel Background (Dark Rust Slate)
+COLOR_PANEL_BORDER = (154, 74, 51) # Panel Border (Burnt Copper)
+COLOR_TEXT_MAIN = (254, 243, 199)  # Primary Text (Warm Sand)
+COLOR_TEXT_MUTED = (217, 119, 87)  # Secondary Text (Muted Terracotta)
+COLOR_ALERT = (239, 68, 68)        # Alert Alert Text
+COLOR_GAUGE_BAR = (234, 88, 12)    # Speedometer Gauge Bar (Copper Orange)
 
-# Button Colors
-COLOR_BTN_SOLVABLE = (16, 185, 129)
-COLOR_BTN_TRAPPED = (239, 68, 68)
-COLOR_BTN_CLEAR = (59, 130, 246)
-COLOR_BTN_RESET = (100, 116, 139)
+# Button Colors (Martian Styled)
+COLOR_BTN_SOLVABLE = (34, 197, 94) # Normal Run
+COLOR_BTN_TRAPPED = (220, 38, 38)  # Martian Storm
+COLOR_BTN_CLEAR = (194, 65, 12)    # Quick Clear
+COLOR_BTN_RESET = (120, 53, 36)    # Reset
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 os.makedirs(ASSETS_DIR, exist_ok=True)
@@ -80,23 +81,23 @@ def draw_custom_rover_icon(surface, center_x, center_y, size, shield_active=Fals
     ]
     for wx, wy in wheel_positions:
         w_rect = pygame.Rect(wx, wy, wheel_w, wheel_h)
-        pygame.draw.rect(surface, (30, 41, 59), w_rect, border_radius=2)
-        pygame.draw.rect(surface, (148, 163, 184), w_rect, 1, border_radius=2)
+        pygame.draw.rect(surface, (50, 30, 25), w_rect, border_radius=2)
+        pygame.draw.rect(surface, (180, 100, 80), w_rect, 1, border_radius=2)
 
     body_rect = pygame.Rect(center_x - body_half, center_y - body_half, body_half * 2, body_half * 2)
-    pygame.draw.rect(surface, (37, 99, 235), body_rect, border_radius=4)
-    pygame.draw.rect(surface, (255, 255, 255), body_rect, 2, border_radius=4)
+    pygame.draw.rect(surface, (217, 119, 6), body_rect, border_radius=4)
+    pygame.draw.rect(surface, (254, 243, 199), body_rect, 2, border_radius=4)
 
     solar_half = int(body_half * 0.65)
     solar_rect = pygame.Rect(center_x - solar_half, center_y - solar_half, solar_half * 2, solar_half * 2)
-    pygame.draw.rect(surface, (245, 158, 11), solar_rect, border_radius=2)
-    pygame.draw.line(surface, (180, 83, 9), (solar_rect.left, center_y), (solar_rect.right, center_y), 1)
-    pygame.draw.line(surface, (180, 83, 9), (center_x, solar_rect.top), (center_x, solar_rect.bottom), 1)
+    pygame.draw.rect(surface, (180, 83, 9), solar_rect, border_radius=2)
+    pygame.draw.line(surface, (251, 191, 36), (solar_rect.left, center_y), (solar_rect.right, center_y), 1)
+    pygame.draw.line(surface, (251, 191, 36), (center_x, solar_rect.top), (center_x, solar_rect.bottom), 1)
 
     mast_dist = body_half - 2
     mast_x = center_x + int(math.cos(math.radians(heading_angle)) * mast_dist)
     mast_y = center_y - int(math.sin(math.radians(heading_angle)) * mast_dist)
-    pygame.draw.circle(surface, (226, 232, 240), (mast_x, mast_y), 4)
+    pygame.draw.circle(surface, (254, 243, 199), (mast_x, mast_y), 4)
     pygame.draw.circle(surface, (239, 68, 68), (mast_x, mast_y), 2)
 
 
@@ -110,7 +111,7 @@ def draw_station_lander_icon(surface, x, y, size, is_start=True, custom_img=None
     cy = y + size // 2
     r = size // 3.2
 
-    bg_color = (16, 185, 129) if is_start else (245, 158, 11)
+    bg_color = COLOR_START if is_start else COLOR_GOAL
     pygame.draw.circle(surface, bg_color, (cx, cy), int(r))
     pygame.draw.circle(surface, (255, 255, 255), (cx, cy), int(r), 2)
 
@@ -293,26 +294,26 @@ class RoverVisualizer:
 
         # Speedometer Gauge & Battery Indicator
         speed_box = pygame.Rect(self.panel_x + 20, self.panel_y + 75, 375, 80)
-        pygame.draw.rect(self.screen, (30, 41, 59), speed_box, border_radius=8)
+        pygame.draw.rect(self.screen, (55, 35, 30), speed_box, border_radius=8)
         
-        speed_label = self.font_title.render(f"SPEED: {self.simulated_speed:.1f} m/s", True, (56, 189, 248))
+        speed_label = self.font_title.render(f"SPEED: {self.simulated_speed:.1f} m/s", True, (251, 191, 36))
         self.screen.blit(speed_label, (speed_box.x + 15, speed_box.y + 12))
 
-        batt_label = self.font_hud.render(f"BATTERY: {self.battery_level:.0f}%", True, (16, 185, 129))
+        batt_label = self.font_hud.render(f"BATTERY: {self.battery_level:.0f}%", True, (34, 197, 94))
         self.screen.blit(batt_label, (speed_box.x + 220, speed_box.y + 14))
 
         gauge_bg = pygame.Rect(speed_box.x + 15, speed_box.y + 45, 345, 16)
-        pygame.draw.rect(self.screen, (15, 23, 42), gauge_bg, border_radius=4)
+        pygame.draw.rect(self.screen, (24, 15, 15), gauge_bg, border_radius=4)
         gauge_fill_w = int((self.simulated_speed / 5.0) * 345)
         gauge_fill = pygame.Rect(speed_box.x + 15, speed_box.y + 45, min(345, max(0, gauge_fill_w)), 16)
         pygame.draw.rect(self.screen, COLOR_GAUGE_BAR, gauge_fill, border_radius=4)
 
         # AI Engine Telemetry
         ai_box = pygame.Rect(self.panel_x + 20, self.panel_y + 170, 375, 150)
-        pygame.draw.rect(self.screen, (30, 41, 59), ai_box, border_radius=8)
+        pygame.draw.rect(self.screen, (55, 35, 30), ai_box, border_radius=8)
 
         mode_badge = f"ALGORITHM: {kb.current_algo_mode}"
-        mode_surf = self.font_hud.render(mode_badge, True, (251, 191, 36) if "A_STAR" in kb.current_algo_mode else (16, 185, 129))
+        mode_surf = self.font_hud.render(mode_badge, True, (251, 191, 36) if "A_STAR" in kb.current_algo_mode else (34, 197, 94))
         self.screen.blit(mode_surf, (ai_box.x + 15, ai_box.y + 12))
 
         status_color = COLOR_ALERT if "TRAPPED" in status_msg or "FAILED" in status_msg else COLOR_START
@@ -335,7 +336,7 @@ class RoverVisualizer:
 
         # Sensor Percepts Panel
         sensor_box = pygame.Rect(self.panel_x + 20, self.panel_y + 335, 375, 130)
-        pygame.draw.rect(self.screen, (30, 41, 59), sensor_box, border_radius=8)
+        pygame.draw.rect(self.screen, (55, 35, 30), sensor_box, border_radius=8)
 
         s_title = self.font_title.render("LOCAL SENSOR PERCEPTS", True, COLOR_TEXT_MAIN)
         self.screen.blit(s_title, (sensor_box.x + 15, sensor_box.y + 10))
@@ -344,8 +345,8 @@ class RoverVisualizer:
         g_txt = f"Radiation Glow : {'ACTIVE (GLOW DETECTED)' if glow else 'Clear'}"
         heading_txt = f"Rover Heading  : {int(self.heading_angle):03d}° NE | Signal: 98%"
 
-        self.screen.blit(self.font_small.render(b_txt, True, (56, 189, 248) if breeze else COLOR_TEXT_MUTED), (sensor_box.x + 15, sensor_box.y + 40))
-        self.screen.blit(self.font_small.render(g_txt, True, (232, 121, 249) if glow else COLOR_TEXT_MUTED), (sensor_box.x + 15, sensor_box.y + 65))
+        self.screen.blit(self.font_small.render(b_txt, True, (249, 115, 22) if breeze else COLOR_TEXT_MUTED), (sensor_box.x + 15, sensor_box.y + 40))
+        self.screen.blit(self.font_small.render(g_txt, True, (219, 39, 119) if glow else COLOR_TEXT_MUTED), (sensor_box.x + 15, sensor_box.y + 65))
         self.screen.blit(self.font_small.render(heading_txt, True, COLOR_TEXT_MUTED), (sensor_box.x + 15, sensor_box.y + 95))
 
         # 5. Render Interactive Buttons
@@ -354,13 +355,13 @@ class RoverVisualizer:
             (self.btn_trapped, "Martian Storm", COLOR_BTN_TRAPPED, active_preset == "trapped"),
             (self.btn_clear, "Quick Clear", COLOR_BTN_CLEAR, active_preset == "clear"),
             (self.btn_reset, "Reset Scenario", COLOR_BTN_RESET, False),
-            (self.btn_fullscreen, "Toggle Fullscreen / Window", (71, 85, 105), False)
+            (self.btn_fullscreen, "Toggle Fullscreen / Window", (120, 53, 36), False)
         ]
 
         for btn_rect, text, base_color, is_active in buttons:
             is_hovered = btn_rect.collidepoint(mouse_pos)
             bg_color = base_color if not is_hovered else (min(255, base_color[0]+30), min(255, base_color[1]+30), min(255, base_color[2]+30))
-            border_color = (255, 255, 255) if is_active or is_hovered else (71, 85, 105)
+            border_color = (254, 243, 199) if is_active or is_hovered else (154, 74, 51)
             border_width = 3 if is_active else 1
 
             pygame.draw.rect(self.screen, bg_color, btn_rect, border_radius=6)
@@ -420,12 +421,12 @@ def run_mars_rover_simulation(grid_size=10, step_delay=0.1, initial_preset="solv
     """Main execution loop for Full-Screen Mars Rover Dashboard with Centered 60 FPS Interpolation."""
     
     print("=" * 75)
-    print("  NASA / JPL AUTONOMOUS MARS ROVER TELEMETRY DASHBOARD (CENTERED 60 FPS)")
+    print("  NASA / JPL AUTONOMOUS MARS ROVER TELEMETRY DASHBOARD (MARTIAN THEME)")
     print("         Track: Hybrid AI Agent (Logic KB + A* Search Evasion)")
     print("=" * 75)
     print(f"Grid Dimensions   : {grid_size} x {grid_size} (Hidden Hazards & Storm Zones)")
+    print(f"Color Palette     : Authentic Martian Basalt, Terracotta, Iron Oxide & Ochre")
     print(f"Assets Directory  : assets/ (Place custom rover.png, hazard.png, radiation.png, etc.)")
-    print(f"Telemetry Panel   : Live Speedometer (m/s), Battery Indicator %, Heading")
     print("=" * 75)
 
     visualizer = RoverVisualizer(grid_size=grid_size)
